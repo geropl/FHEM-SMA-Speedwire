@@ -1444,91 +1444,92 @@ sub SMAInverter_SMAlogon($$$) {
  #build final command to send
  $cmd = $cmdheader . $pktlength . $esignature . $target_ID . "0001" . $myID . "0001" . "00000000" . $spkt_ID . $cmd_ID . $timestmp . "00000000" . $encpasswd . "00000000";
 
- # flush after every write
- $| = 1;
+ Log3 $name, 1, $cmd
+#  # flush after every write
+#  $| = 1;
 
- # Create Socket and check if successful
- $socket = new IO::Socket::INET (PeerHost => $host, PeerPort => 9522, Proto => 'udp',); # open Socket
+#  # Create Socket and check if successful
+#  $socket = new IO::Socket::INET (PeerHost => $host, PeerPort => 9522, Proto => 'udp',); # open Socket
 
- if (!$socket) {
-     # in case of error
-     Log3 $name, 1, "$name - ERROR - Can't open socket to inverter: $!";
-     return 0;
- };
+#  if (!$socket) {
+#      # in case of error
+#      Log3 $name, 1, "$name - ERROR - Can't open socket to inverter: $!";
+#      return 0;
+#  };
 
- # Send Data
- $data = pack("H*",$cmd);
- $socket->send($data);
- Log3 $name, 4, "$name - Send login to $host on Port 9522 with password $pass ";
- Log3 $name, 5, "$name - Send: $cmd ";
+#  # Send Data
+#  $data = pack("H*",$cmd);
+#  $socket->send($data);
+#  Log3 $name, 4, "$name - Send login to $host on Port 9522 with password $pass ";
+#  Log3 $name, 5, "$name - Send: $cmd ";
 
- # Receive Data and do a first check regarding length
- eval {
-     $socket->recv($data, $hash->{HELPER}{MAXBYTES});
-     $size = length($data);
- };
+#  # Receive Data and do a first check regarding length
+#  eval {
+#      $socket->recv($data, $hash->{HELPER}{MAXBYTES});
+#      $size = length($data);
+#  };
 
- # check if something was received
- if (defined $size)	{
-     my $received = unpack("H*", $data);
-     Log3 $name, 5, "$name - Received: $received";
- }
+#  # check if something was received
+#  if (defined $size)	{
+#      my $received = unpack("H*", $data);
+#      Log3 $name, 5, "$name - Received: $received";
+#  }
 
- # Nothing received -> exit
- if (not defined $size) {
-     Log3 $name, 1, "$name - Nothing received...";
-     # send: cmd_logout
-     $socket->close();
-     SMAInverter_SMAlogout($hash,$host);
-     return 0;
- } else {
-    # We have received something!
-    if ($size > 62) {
-        # Check all parameters of answer
-        my $r_susyid = unpack("v*", substr $data, 20, 2);
-        my $r_serial = unpack("V*", substr $data, 22, 4);
-        my $r_pkt_ID = unpack("v*", substr $data, 40, 2);
-        my $r_cmd_ID = unpack("V*", substr $data, 42, 4);
-        my $r_error  = unpack("V*", substr $data, 36, 4);
+#  # Nothing received -> exit
+#  if (not defined $size) {
+#      Log3 $name, 1, "$name - Nothing received...";
+#      # send: cmd_logout
+#      $socket->close();
+#      SMAInverter_SMAlogout($hash,$host);
+#      return 0;
+#  } else {
+#     # We have received something!
+#     if ($size > 62) {
+#         # Check all parameters of answer
+#         my $r_susyid = unpack("v*", substr $data, 20, 2);
+#         my $r_serial = unpack("V*", substr $data, 22, 4);
+#         my $r_pkt_ID = unpack("v*", substr $data, 40, 2);
+#         my $r_cmd_ID = unpack("V*", substr $data, 42, 4);
+#         my $r_error  = unpack("V*", substr $data, 36, 4);
 
-        if (($r_pkt_ID ne $pkt_ID) || ($r_cmd_ID ne 0xFFFD040D) || ($r_error ne 0)) {
-            # Response does not match the parameters we have sent, maybe different target
-            Log3 $name, 1, "$name - Inverter answer does not match our parameters.";
-            Log3 $name, 5, "$name - Request/Response: SusyID $mysusyid/$r_susyid, Serial $myserialnumber/$r_serial, Packet ID $hash->{HELPER}{PKT_ID}/$r_pkt_ID, Command 0xFFFD040D/$r_cmd_ID, Error $r_error";
-            # send: cmd_logout
-            $socket->close();
-            SMAInverter_SMAlogout($hash,$host);
-            return 0;
-        }
-    } else {
-        Log3 $name, 1, "$name - Format of inverter response does not fit.";
-        # send: cmd_logout
-        $socket->close();
-        SMAInverter_SMAlogout($hash,$host);
-        return 0;
-    }
- }
+#         if (($r_pkt_ID ne $pkt_ID) || ($r_cmd_ID ne 0xFFFD040D) || ($r_error ne 0)) {
+#             # Response does not match the parameters we have sent, maybe different target
+#             Log3 $name, 1, "$name - Inverter answer does not match our parameters.";
+#             Log3 $name, 5, "$name - Request/Response: SusyID $mysusyid/$r_susyid, Serial $myserialnumber/$r_serial, Packet ID $hash->{HELPER}{PKT_ID}/$r_pkt_ID, Command 0xFFFD040D/$r_cmd_ID, Error $r_error";
+#             # send: cmd_logout
+#             $socket->close();
+#             SMAInverter_SMAlogout($hash,$host);
+#             return 0;
+#         }
+#     } else {
+#         Log3 $name, 1, "$name - Format of inverter response does not fit.";
+#         # send: cmd_logout
+#         $socket->close();
+#         SMAInverter_SMAlogout($hash,$host);
+#         return 0;
+#     }
+#  }
 
- # All seems ok, logged in!
- my $inv_susyid = unpack("v*", substr $data, 28, 2);
- my $inv_serial = unpack("V*", substr $data, 30, 4);
- $socket->close();
+#  # All seems ok, logged in!
+#  my $inv_susyid = unpack("v*", substr $data, 28, 2);
+#  my $inv_serial = unpack("V*", substr $data, 30, 4);
+#  $socket->close();
 
- if (AttrVal($name, "target-serial", undef)) {
-     return 0 unless($inv_serial eq $target_serial);
- } else {
-     BlockingInformParent("SMAInverter_setAttrFromBlocking", [$name, "target-serial", $inv_serial], 0);   # Serial automatisch setzen, Forum: https://forum.fhem.de/index.php/topic,56080.msg967448.html#msg967448
- }
+#  if (AttrVal($name, "target-serial", undef)) {
+#      return 0 unless($inv_serial eq $target_serial);
+#  } else {
+#      BlockingInformParent("SMAInverter_setAttrFromBlocking", [$name, "target-serial", $inv_serial], 0);   # Serial automatisch setzen, Forum: https://forum.fhem.de/index.php/topic,56080.msg967448.html#msg967448
+#  }
 
- if (AttrVal($name, "target-susyid", undef)) {
-     return 0 unless($inv_susyid eq $target_susyid);
- } else {
-     BlockingInformParent("SMAInverter_setAttrFromBlocking", [$name, "target-susyid", $inv_susyid], 0);   # SuSyId automatisch setzen, Forum: https://forum.fhem.de/index.php/topic,56080.msg967448.html#msg967448
- }
+#  if (AttrVal($name, "target-susyid", undef)) {
+#      return 0 unless($inv_susyid eq $target_susyid);
+#  } else {
+#      BlockingInformParent("SMAInverter_setAttrFromBlocking", [$name, "target-susyid", $inv_susyid], 0);   # SuSyId automatisch setzen, Forum: https://forum.fhem.de/index.php/topic,56080.msg967448.html#msg967448
+#  }
 
- Log3 $name, 4, "$name - logged in to inverter serial: $inv_serial, susyid: $inv_susyid";
+#  Log3 $name, 4, "$name - logged in to inverter serial: $inv_serial, susyid: $inv_susyid";
 
-return 1;
+# return 1;
 }
 
 ################################################################
